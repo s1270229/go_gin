@@ -2,9 +2,45 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Sample App</title>
+    <title>商品管理</title>
 </head>
 <body>
-    <h1>{{.data}}</h1>
+    <h2>商品一覧</h2>
+    <form method="post" action="/delete">
+        <table border="1" style="border-collapse: collapse">
+            <thead>
+                <tr>
+                    <th>名前</th>
+                    <th>値段</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ range .products }}
+                    <tr>
+                        <td>{{ .Name }}</td>
+                        <td>{{ .Price }}円</td>
+                        <td><input type="submit" formaction="/delete/{{ .ID }}" value="削除"></td>
+                    </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </form>
+    <br>
+    <form method="post" action="/create">
+        <table>
+            <tbody>
+                <tr>
+                    <td>商品名</td>
+                    <td><input type="text" name="name" size="30" placeholder="入力してください"></td>
+                </tr>
+                <tr>
+                    <td>値段</td>
+                    <td><input type="text" name="price" size="10" placeholder="入力してください">　円</td>
+                </tr>
+            </tbody>
+        </table>
+        <p><input type="submit" value="追加"></p>
+    </form>
 </body>
 </html>

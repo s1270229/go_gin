@@ -1,10 +1,8 @@
-package main
+package entity
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
-	_ "github.com/mattn/go-sqlite3"
-	"strconv"
+	"github.com/mattn/go-sqlite3"
 )
 
 // 商品エンティティ
@@ -15,7 +13,7 @@ type Product struct {
 }
 
 // DBを初期化します
-func dbInit() {
+func init() {
 	db, err := gorm.Open("sqlite3", "test.sqlite3")
 	if err != nil {
 		panic("データベースが開けませんでした。（init）")
@@ -34,6 +32,20 @@ func insert(name string, price int) {
 	defer db.Close()
 }
 
+// 商品を更新します
+func update(id int, name string, price int) {
+	db, err := gorm.Open("sqlite3", "test.sqlite3")
+	if err != nil {
+		panic("データベースが開けませんでした。（update)")
+	}
+	var product Product
+	db.First(&product, id)
+	product.Name = name
+	product.Price = price
+	db.Save(&product)
+	db.Close()
+}
+
 // 商品を削除します
 func delete(id int) {
 	db, err := gorm.Open("sqlite3", "test.sqlite3")
@@ -47,7 +59,7 @@ func delete(id int) {
 }
 
 //　全商品を取得します
-func getAll() []Product {
+func getAll() []Todo {
 	db, err := gorm.Open("sqlite3", "test.sqlite3")
 	if err != nil {
 		panic("データベースが開けませんでした。(getAll)")
@@ -56,54 +68,4 @@ func getAll() []Product {
 	db.Order("created_at desc").Find(&products)
 	db.Close()
 	return products
-}
-
-func main() {
-	router := gin.Default()
-	router.LoadHTMLGlob("../templates/*.html")
-
-	dbInit()
-
-	router.GET("/", func(ctx *gin.Context) {
-		products := getAll()
-		ctx.HTML(200, "index.html", gin.H{"products": products})
-	})
-
-	router.POST("/create", func(ctx *gin.Context) {
-		name := ctx.PostForm("name")
-		price, err := strconv.Atoi(ctx.PostForm("price"))
-		if err != nil || len(name) == 0 {
-			ctx.Redirect(302, "/")
-		}
-		insert(name, price)
-		ctx.Redirect(302, "/")
-	})
-
-	router.POST("/update/:id", func(ctx *gin.Context) {
-		n := ctx.Param("id")
-		id, err := strconv.Atoi(n)
-		if err != nil {
-			panic("ERROR")
-		}
-		name := ctx.PostForm("name")
-		price, err := strconv.Atoi(ctx.PostForm("price"))
-		if err != nil {
-			panic("ERROR")
-		}
-		update(id, name, price)
-		ctx.Redirect(302, "/")
-	})
-
-	router.POST("/delete/:id", func(ctx *gin.Context) {
-		n := ctx.Param("id")
-		id, err := strconv.Atoi(n)
-		if err != nil {
-			panic("ERROR")
-		}
-		delete(id)
-		ctx.Redirect(302, "/")
-
-	})
-
-	router.Run()
 }
