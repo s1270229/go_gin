@@ -1,8 +1,8 @@
-package entity
+package product
 
 import (
 	"github.com/jinzhu/gorm"
-	"github.com/mattn/go-sqlite3"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // 商品エンティティ
@@ -12,8 +12,16 @@ type Product struct {
 	Price int
 }
 
+func NewProduct(name string, price int) *Product {
+	p := new(Product)
+	p.Name = name
+	p.Price = price
+
+	return p
+}
+
 // DBを初期化します
-func init() {
+func DbInit() {
 	db, err := gorm.Open("sqlite3", "test.sqlite3")
 	if err != nil {
 		panic("データベースが開けませんでした。（init）")
@@ -22,32 +30,27 @@ func init() {
 	defer db.Close()
 }
 
-// DBに商品を追加します
-func insert(name string, price int) {
+// 商品を追加 or 編集します
+func (p Product) Save() {
 	db, err := gorm.Open("sqlite3", "test.sqlite3")
 	if err != nil {
-		panic("データベースが開けませんでした。（insert)")
+		panic(err)
 	}
-	db.Create(&Product{Name: name, Price: price})
+	var product Product
+	result := db.First(&product, "name = ?", p.Name)
+
+	if result.Error != nil {
+		db.Create(&p)
+	} else {
+		product.Name = p.Name
+		product.Price = p.Price
+		db.Save(product)
+	}
 	defer db.Close()
 }
 
-// 商品を更新します
-func update(id int, name string, price int) {
-	db, err := gorm.Open("sqlite3", "test.sqlite3")
-	if err != nil {
-		panic("データベースが開けませんでした。（update)")
-	}
-	var product Product
-	db.First(&product, id)
-	product.Name = name
-	product.Price = price
-	db.Save(&product)
-	db.Close()
-}
-
 // 商品を削除します
-func delete(id int) {
+func Delete(id int) {
 	db, err := gorm.Open("sqlite3", "test.sqlite3")
 	if err != nil {
 		panic("データベースが開けませんでした。（delete)")
@@ -59,7 +62,7 @@ func delete(id int) {
 }
 
 //　全商品を取得します
-func getAll() []Todo {
+func FindAll() []Product {
 	db, err := gorm.Open("sqlite3", "test.sqlite3")
 	if err != nil {
 		panic("データベースが開けませんでした。(getAll)")
